@@ -62,6 +62,8 @@ class ScrollContainer : public Container {
 
 	int deadzone;
 
+	bool ignore_scroll_margin;
+
 	void _cancel_drag();
 
 protected:
@@ -90,6 +92,9 @@ public:
 
 	int get_deadzone() const;
 	void set_deadzone(int p_deadzone);
+
+	bool get_ignore_scroll_margin() const;
+	void set_ignore_scroll_margin(bool p_ignore);
 
 	virtual bool clips_input() const;
 	ScrollContainer();

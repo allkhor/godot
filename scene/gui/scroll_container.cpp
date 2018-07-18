@@ -224,10 +224,10 @@ void ScrollContainer::_notification(int p_what) {
 
 		child_max_size = Size2(0, 0);
 		Size2 size = get_size();
-		if (h_scroll->is_visible())
+		if (h_scroll->is_visible() && !ignore_scroll_margin)
 			size.y -= h_scroll->get_minimum_size().y;
 
-		if (v_scroll->is_visible())
+		if (v_scroll->is_visible() && !ignore_scroll_margin)
 			size.x -= h_scroll->get_minimum_size().x;
 
 		for (int i = 0; i < get_child_count(); i++) {
@@ -439,6 +439,15 @@ void ScrollContainer::set_deadzone(int p_deadzone) {
 	deadzone = p_deadzone;
 }
 
+void ScrollContainer::set_ignore_scroll_margin(bool p_ignore) {
+	ignore_scroll_margin = p_ignore;
+	queue_sort();
+}
+
+bool ScrollContainer::get_ignore_scroll_margin() const {
+	return ignore_scroll_margin;
+}
+
 void ScrollContainer::_bind_methods() {
 
 	ObjectTypeDB::bind_method(_MD("_scroll_moved"), &ScrollContainer::_scroll_moved);
@@ -454,6 +463,8 @@ void ScrollContainer::_bind_methods() {
 	ObjectTypeDB::bind_method(_MD("get_v_scroll"), &ScrollContainer::get_v_scroll);
 	ObjectTypeDB::bind_method(_MD("set_deadzone", "deadzone"), &ScrollContainer::set_deadzone);
 	ObjectTypeDB::bind_method(_MD("get_deadzone"), &ScrollContainer::get_deadzone);
+	ObjectTypeDB::bind_method(_MD("set_ignore_scroll_margin", "ignore"), &ScrollContainer::set_ignore_scroll_margin);
+	ObjectTypeDB::bind_method(_MD("get_ignore_scroll_margin"), &ScrollContainer::get_ignore_scroll_margin);
 
 	ADD_SIGNAL(MethodInfo("scroll_started"));
 	ADD_SIGNAL(MethodInfo("scroll_ended"));
@@ -461,6 +472,7 @@ void ScrollContainer::_bind_methods() {
 	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "scroll/horizontal"), _SCS("set_enable_h_scroll"), _SCS("is_h_scroll_enabled"));
 	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "scroll/vertical"), _SCS("set_enable_v_scroll"), _SCS("is_v_scroll_enabled"));
 	ADD_PROPERTY(PropertyInfo(Variant::INT, "scroll/deadzone"), _SCS("set_deadzone"), _SCS("get_deadzone"));
+	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "scroll/ignore_margin"), _SCS("set_ignore_scroll_margin"), _SCS("get_ignore_scroll_margin"));
 };
 
 ScrollContainer::ScrollContainer() {
@@ -484,4 +496,5 @@ ScrollContainer::ScrollContainer() {
 	scroll_v = true;
 
 	deadzone = GLOBAL_DEF("gui/common/default_scroll_deadzone", 0);
+	ignore_scroll_margin = false;
 };
