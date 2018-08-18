@@ -46,6 +46,35 @@
 #include "viewport.h"
 #include <stdio.h>
 
+void SceneTreeTimer::_bind_methods() {
+	ObjectTypeDB::bind_method(_MD("set_time_left", "time"), &SceneTreeTimer::set_time_left);
+	ObjectTypeDB::bind_method(_MD("get_time_left"), &SceneTreeTimer::get_time_left);
+	ADD_SIGNAL(MethodInfo("timeout"));
+}
+
+void SceneTreeTimer::set_time_left(float p_time) {
+	time_left = p_time;
+}
+
+float SceneTreeTimer::get_time_left() const {
+	return time_left;
+}
+
+void SceneTreeTimer::set_pause_mode_process(bool p_pause_mode_process) {
+	if (process_pause != p_pause_mode_process) {
+		process_pause = p_pause_mode_process;
+	}
+}
+
+bool SceneTreeTimer::is_pause_mode_process() {
+	return process_pause;
+}
+
+SceneTreeTimer::SceneTreeTimer() {
+	time_left = 0;
+	process_pause = true;
+}
+
 void SceneTree::tree_changed() {
 
 	tree_version++;
@@ -527,6 +556,27 @@ bool SceneTree::idle(float p_time) {
 	root_lock--;
 
 	_flush_delete_queue();
+
+	//go through timers
+
+	for (List<Ref<SceneTreeTimer> >::Element *E = timers.front(); E;) {
+
+		List<Ref<SceneTreeTimer> >::Element *N = E->next();
+		if (pause && !E->get()->is_pause_mode_process()) {
+			E = N;
+			continue;
+		}
+
+		float time_left = E->get()->get_time_left();
+		time_left -= p_time;
+		E->get()->set_time_left(time_left);
+
+		if (time_left < 0) {
+			E->get()->emit_signal("timeout");
+			timers.erase(E);
+		}
+		E = N;
+	}
 
 	return _quit;
 }
@@ -1536,6 +1586,15 @@ void SceneTree::drop_files(const Vector<String> &p_files, int p_from_screen) {
 	MainLoop::drop_files(p_files, p_from_screen);
 }
 
+Ref<SceneTreeTimer> SceneTree::create_timer(float p_delay_sec, bool p_process_pause) {
+	Ref<SceneTreeTimer> stt;
+	stt.instance();
+	stt->set_pause_mode_process(p_process_pause);
+	stt->set_time_left(p_delay_sec);
+	timers.push_back(stt);
+	return stt;
+}
+
 void SceneTree::_bind_methods() {
 
 	//ObjectTypeDB::bind_method(_MD("call_group","call_flags","group","method","arg1","arg2"),&SceneMainLoop::_call_group,DEFVAL(Variant()),DEFVAL(Variant()));
@@ -1565,6 +1624,8 @@ void SceneTree::_bind_methods() {
 	ObjectTypeDB::bind_method(_MD("is_paused"), &SceneTree::is_paused);
 	ObjectTypeDB::bind_method(_MD("set_input_as_handled"), &SceneTree::set_input_as_handled);
 	ObjectTypeDB::bind_method(_MD("is_input_handled"), &SceneTree::is_input_handled);
+
+	ObjectTypeDB::bind_method(_MD("create_timer:SceneTreeTimer", "time_sec", "pause_mode_process"), &SceneTree::create_timer, DEFVAL(true));
 
 	ObjectTypeDB::bind_method(_MD("get_node_count"), &SceneTree::get_node_count);
 	ObjectTypeDB::bind_method(_MD("get_frame"), &SceneTree::get_frame);

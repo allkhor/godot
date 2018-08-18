@@ -46,6 +46,24 @@ class Viewport;
 class Material;
 class Mesh;
 
+class SceneTreeTimer : public Reference {
+	OBJ_TYPE(SceneTreeTimer, Reference);
+	float time_left;
+	bool process_pause;
+
+protected:
+	static void _bind_methods();
+
+public:
+	void set_time_left(float p_time);
+	float get_time_left() const;
+
+	void set_pause_mode_process(bool p_pause_mode_process);
+	bool is_pause_mode_process();
+
+	SceneTreeTimer();
+};
+
 class SceneTree : public MainLoop {
 
 	_THREAD_SAFE_CLASS_
@@ -154,6 +172,8 @@ private:
 
 	void _change_scene(Node *p_to);
 	//void _call_group(uint32_t p_call_flags,const StringName& p_group,const StringName& p_function,const Variant& p_arg1,const Variant& p_arg2);
+
+	List<Ref<SceneTreeTimer> > timers;
 
 	static SceneTree *singleton;
 	friend class Node;
@@ -347,6 +367,8 @@ public:
 	Error change_scene(const String &p_path);
 	Error change_scene_to(const Ref<PackedScene> &p_scene);
 	Error reload_current_scene();
+
+	Ref<SceneTreeTimer> create_timer(float p_delay_sec, bool p_process_pause = true);
 
 	//used by Main::start, don't use otherwise
 	void add_current_scene(Node *p_current);
